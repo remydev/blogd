@@ -1,0 +1,21 @@
+name: blogd
+version: 0.1.0
+
+authors:
+  - Luka Vandervelden <lukc@upyum.com>
+
+description: |
+  Blog component for our microservice-based architecture.
+
+# FIXME: Use versions, maybe?
+dependencies:
+  kemal:
+    github: kemalcr/kemal
+  html_builder:
+    github: crystal-lang/html_builder
+
+targets:
+  blogd:
+    main: src/main.cr
+
+# license: MIT
