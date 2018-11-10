@@ -1,28 +1,13 @@
-require "kemal"
+require "ipc"
+require "json"
+require "yaml"
+require "markdown"
 require "html_builder"
+require "./blogd.cr"
 
-class Model
+class BlogD
 	class Article
-		property title    : String
-		property subtitle : String?
-		property content  : String
-		property author   : String?
-
-		getter comments   : Array(Nil)
-
-		JSON.mapping({
-			title:       String,
-			subtitle:    String?,
-			content:     String,
-			author:      String?,
-			comments:    Array(Nil)
-		})
-
-		def initialize(@title, @content, @subtitle = nil, @author = nil)
-			@comments = Array(Nil).new
-		end
-
-		def to_html
+		def to_html(**attrs)
 			HTML.build {
 				div class: "hero is-info is-bold blog-picture" {
 					div class: "hero-body" {
@@ -53,7 +38,11 @@ class Model
 								}
 
 								div class: "content article-body" {
-									html @content
+									if attrs[:short]?
+										html @content[0..100] + "..."
+									else
+										html @content
+									end
 								}
 							}
 						}
@@ -67,60 +56,54 @@ class Model
 	def self.articles
 		array = Array(Article).new
 		Dir.each_child "storage" do |filename|
-			unless filename.match /\.json$/
+			p filename
+			unless filename.match /\.md$/
 				next
 			end
+			p filename
 
-			array << Article.from_json File.read "storage/#{filename}"
+
+			begin
+				array << Article.from_markdown_file "storage/#{filename}"
+			rescue
+			end
 		end
 		array
 	end
 end
 
-get "/articles" do
-	{
-		articles: [
-			Model.articles.to_json
-		]
-	}.to_json
-end
+IPC::Service.new("blogd").loop do |event|
+	client = event.client
 
-get "/" do |env|
-	env.response.headers["X-Title"] = "Blog"
+	if event.is_a? IPC::Event::Message
+		message = event.message
 
-	articles = Model.articles
+		case message.type
+		when BlogD::RequestTypes::GET_ALL_ARTICLES.value
+			resources_requested = false
+			article = nil
 
-	HTML.build {
-		if articles.empty?
-			section class: "section" {
-				div class: "container" {
-					p class: "title is-2 has-text-centered" {
-						text "No content here!"
-					}
-					p class: "subtitle is-2 has-text-centered" {
-						text "Maybe something will be posted in the future!"
-					}
-				}
-			}
-		else
-			html articles.each { |x| html x.to_html }
+			client.send BlogD::ResponseTypes::OK.value.to_u8, {
+				articles: BlogD.articles
+			}.to_json
+		when BlogD::RequestTypes::GET_ARTICLE.value
+			title = message.payload
+
+			article = BlogD.articles.find { |x| x.title == title }
+
+			if article
+				client.send BlogD::ResponseTypes::OK.value.to_u8, {
+					article: article
+				}.to_json
+			else
+				client.send BlogD::ResponseTypes::ARTICLE_NOT_FOUND.to_u8, ""
+			end
+
+			next
 		end
-	}
-end
 
-get "/:id" do |env|
-	article = Model.articles.find{ |x| x.title == env.params.url["id"] }
-
-	if article.nil?
-		halt env, status_code: 404
+		client.send BlogD::ResponseTypes::INVALID_REQUEST.to_u8, "type field has an unknown value"
+		next
 	end
-
-	env.response.headers["X-Title"] = article.title
-
-	HTML.build {
-		html article.to_html
-	}
 end
-
-Kemal.run
 
