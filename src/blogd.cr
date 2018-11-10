@@ -25,6 +25,7 @@ end
 class BlogD::Article
 	property title    : String
 	property subtitle : String?
+	property date     : Time
 	property content  : String
 	property author   : String?
 	property body     : String
@@ -39,11 +40,18 @@ class BlogD::Article
 		author:      String?,
 		comments:    Array(Nil),
 		body:        String,
-		html_body:   String
+		html_body:   String,
+		date:        Time
 	})
 
-	def initialize(@title, @content, @subtitle = nil, @author = nil, @body = "", @html_body = "")
+	def initialize(@title, @content, @subtitle = nil, @author = nil, @body = "", @html_body = "", date : Time? = nil)
 		@comments = Array(Nil).new
+
+		@date = if date.nil?
+			Time.now
+		else
+			date
+		end
 	end
 
 	def self.from_markdown_file(filename)
@@ -63,6 +71,7 @@ class BlogD::Article
 
 			headers = nil
 			body = nil
+			date = nil
 
 			unless header_end
 				body = content
@@ -73,6 +82,8 @@ class BlogD::Article
 
 				p headers
 				p body
+
+				date = headers.try &.["date"]?.try &.as_time?
 			end
 
 			html_body = Markdown.to_html body
@@ -83,7 +94,8 @@ class BlogD::Article
 				headers.try &.["subtitle"]?.try &.as_s?,
 				headers.try &.["author"]?.try &.as_s?,
 				body: body || "",
-				html_body: html_body || ""
+				html_body: html_body || "",
+				date: date
 			)
 
 			File.write json_filename, article.to_json
