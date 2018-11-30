@@ -6,53 +6,6 @@ require "html_builder"
 require "./blogd.cr"
 
 class BlogD
-	class Article
-		def to_html(**attrs)
-			HTML.build {
-				div class: "hero is-info is-bold blog-picture" {
-					div class: "hero-body" {
-					}
-				}
-				div(class: "section blog-item") {
-					div(class: "container") {
-						article class: "card article" {
-							div class: "card-content" {
-								div class: "media" {
-									div class: "media-content has-text-centered" {
-										a href: "/blog/" + @title {
-											h2 class: "title is-1" {
-												text @title
-											}
-
-											@subtitle.try { |subtitle|
-												h3 class: "subtitle is-2" {
-													text subtitle
-												}
-											}
-										}
-
-										@author.try { |author|
-											text author
-										}
-									}
-								}
-
-								div class: "content article-body" {
-									if attrs[:short]?
-										html @content[0..100] + "..."
-									else
-										html @content
-									end
-								}
-							}
-						}
-						br # Remove as soon as proper CSS is in place.
-					}
-				}
-			}
-		end
-	end
-
 	def self.articles
 		array = Array(Article).new
 		Dir.each_child "storage" do |filename|
