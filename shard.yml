@@ -13,6 +13,10 @@ dependencies:
     github: kemalcr/kemal
   html_builder:
     github: crystal-lang/html_builder
+  ipc:
+    git: https://git.karchnu.fr/JunkOS/ipc.cr
+  fs:
+    git: https://git.karchnu.fr/JunkOS/fs.cr
 
 targets:
   blogd:
