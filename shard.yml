@@ -11,6 +11,7 @@ description: |
 dependencies:
   kemal:
     github: kemalcr/kemal
+    branch: master
   html_builder:
     github: crystal-lang/html_builder
   ipc:
