@@ -14,9 +14,9 @@ dependencies:
   html_builder:
     github: crystal-lang/html_builder
   ipc:
-    git: https://git.karchnu.fr/JunkOS/ipc.cr
+    git: https://git.karchnu.fr/weirdOS/ipc.cr
   fs:
-    git: https://git.karchnu.fr/JunkOS/fs.cr
+    git: https://git.karchnu.fr/weirdOS/fs.cr
 
 targets:
   blogd:
